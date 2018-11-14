@@ -1,0 +1,14 @@
+Titanic Plan <3
+
+Nov. 13th Notes (use the file that anand file (its in the link in github), work on fare and age then try a heat map, and maybe training SVM!)
+decisions:
+	fare: round up or down
+	Split: PClass, sex, Embarked
+	age: impute, using some other features
+		w1() + w2() + w3()…
+	Ignore: passenger ID
+	name: maybe using the last name, or just ignore it
+	
+	Cabin:
+		split into letter and integer, then see if there is any correlation with the target.
+
