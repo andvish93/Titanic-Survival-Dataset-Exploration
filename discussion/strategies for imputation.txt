@@ -1,0 +1,13 @@
+how to impute age. 
+
+--- 4 other features as representative (combinations of these features)
+--- use 1 feature as representative
+--- age distribution -- find central tendency to impute
+
+drop missing values for age 
+-- do a distribution and see how much it changes
+
+
+
+mean of age categories vs predicted ages
+
