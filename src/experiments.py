@@ -1,6 +1,6 @@
 # Prediction Experiments
 from sklearn.svm import SVC
-import numpy as np
+#import numpy as np
 import pandas as pd
 
 
@@ -12,7 +12,7 @@ class experiments_on_model:
         self.train_data = pd.read_csv(train_file)
         self.test_data = pd.read_csv(test_file)
         # default parameters
-        self.parameters = SVC().get_params
+        self.parameters = self.update_params()
                 
     # perform data_preprocessing steps here    
     def data_processing(data):
@@ -90,8 +90,8 @@ if __name__ == "main":
     experiment0.update_params() # use this to run various tests 
     
     # performs train, and test and returns test output
-    experiment0.experiments()
-    
+    output = experiment0.experiments()
+    print(output)
     # prints results
     experiment0.print_results()
     
