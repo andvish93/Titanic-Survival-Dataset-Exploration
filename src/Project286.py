@@ -5,8 +5,8 @@ import numpy as np
 from sklearn.preprocessing import Imputer
 
 print('*******Fetch train and test data*******')
-DIR='/Users/vedashreebhandare/Documents/CS286/ProjectTitanicSurvival/TitanicData'
-train_data = pd.read_csv(DIR+'/train_split.csv', delimiter=',')
+
+train_data = pd.read_csv('train_split.csv', delimiter=',')
 print(train_data.shape)
 
 print('**********Train Information**********')
