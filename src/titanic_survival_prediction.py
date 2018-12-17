@@ -11,19 +11,16 @@ Last updated:12/16/2018
 """
 
 # imports
-import sys
+
 import numpy as np
 import pandas as pd
-import itertools
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 from sklearn.impute import SimpleImputer
-
 from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score, cross_val_predict
+from sklearn.metrics import confusion_matrix
 
-__NUM_ITERATIONS__ = 5
-__TRAINING_TEST_SPLIT__ = 0.8
 __PREDICTOR_VARIABLES__ = ['Pclass','Age', 'SibSp', 'Parch', 'Fare', 'female', 'male', 'C', 'Q', 'S']
 
 
@@ -162,11 +159,10 @@ def data_cleaning(df):
     imp=SimpleImputer(strategy="median")
     imp.fit(df[["Age"]])
     df["Age"]=imp.transform(df[["Age"]]).ravel()    
-    
+
     # One hot encoding on feature Sex
     print("Performing one hot encoding on Sex column")
     df = one_hot_enc(df,"Sex")
-
     # One hot encoding on feature Embarked
     print("Performing one hot encoding on Embarked column")
     df = one_hot_enc(df,"Embarked")
@@ -175,27 +171,18 @@ def data_cleaning(df):
     return df
     
 def model(df):
-    accuracy = list()
-     
     
-    for _ in itertools.repeat(None, __NUM_ITERATIONS__): 
-        dfsvc_train = df.sample(frac = __TRAINING_TEST_SPLIT__)
-        dfsvc_test = pd.concat([dfsvc_train, df]).loc[dfsvc_train.index.symmetric_difference(df.index)] 
-            
-        # extract class info
-        y_train = np.array(dfsvc_train['Survived'])
-        y_test = np.array(dfsvc_test['Survived'])
-        
-        # Extract data values
-        x_train = dfsvc_train[__PREDICTOR_VARIABLES__]
-        x_test = dfsvc_test[__PREDICTOR_VARIABLES__]
-        
-        # Defining SVC classifier
-        clf = SVC(C = 0.5, gamma = 'auto', class_weight=None, coef0=0.0, kernel = 'linear')
-        clf.fit(x_train,y_train) 
-        print(clf.score(x_test, y_test))
-
-    return clf
+    clf = SVC(C = 1, gamma = 'auto', class_weight=None, coef0=0.0, kernel = 'linear')
+    print("Training the model")
+    clf.fit(df[__PREDICTOR_VARIABLES__], df["Survived"])
+    print("Performing 5Fold cross validation")
+    scores = cross_val_score(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5, n_jobs=-1)
+    print("Cross validation scores : ",scores)
+    print("Performing cross val prediction analysis")
+    preds = cross_val_predict(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5)
+    conf_mat = confusion_matrix(df["Survived"], preds)
+    print("Confusion matrix\n",conf_mat)
+    return clf,scores
 
 def main():
     
@@ -204,24 +191,27 @@ def main():
     df = read_file("train.csv")
     
     # data visualization
-    # data_visualization(df)
+    data_visualization(df)
 
     # data cleaning - pruning, imputation, one hot encoding
     cleaned_df = data_cleaning(df)
 
     # training and 5 fold and c parameter
-    clf = model(cleaned_df)    
+    clf, scores = model(cleaned_df)    
+    
+
+    
     test_df = read_file("test.csv")
 
-    print("Imputing age column with the median value")    
-    imp=SimpleImputer(strategy="median")
-    imp.fit(test_df[["Age"]])
-    test_df["Age"]=imp.transform(test_df[["Age"]]).ravel()    
+    age_median = df["Age"].median()    
+    Fare_median = df["Fare"].median()
+    
+    print("Imputing age column with the median value of training data")    
+    test_df.Age.fillna(age_median,inplace=True)
 
-    print("Imputing Fare column with the median value")    
-    imp=SimpleImputer(strategy="median")
-    imp.fit(test_df[["Fare"]])
-    test_df["Fare"]=imp.transform(test_df[["Fare"]]).ravel()    
+    print("Imputing Fare column with the median value of test data")    
+    
+    test_df.Fare.fillna(Fare_median,inplace=True)
 
     # One hot encoding on feature Embarked
     test_df = one_hot_enc(test_df,"Sex")
@@ -234,17 +224,16 @@ def main():
     
     actual_class = pd.read_csv("gender_submission.csv")
     actual_class = list(actual_class["Survived"])
-    print(len(actual_class))
-    print(len(predicted_class))
+
     count = 0
     for index,predicted_c in enumerate(predicted_class):
         if actual_class[index] == predicted_c:
             count +=1
     
-    print(count/len(predicted_class)*100)
+    print("Accuracy of predictions",count/len(predicted_class)*100,"%")
     
     
-    pass
+    return
 
 
 
