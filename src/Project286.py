@@ -2,10 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from sklearn.preprocessing import Imputer
 
 print('*******Fetch train and test data*******')
 DIR='/Users/vedashreebhandare/Documents/CS286/ProjectTitanicSurvival/TitanicData'
-train_data = pd.read_csv(DIR+'/train.csv', delimiter=',')
+train_data = pd.read_csv(DIR+'/train_split.csv', delimiter=',')
 print(train_data.shape)
 
 print('**********Train Information**********')
@@ -33,16 +34,28 @@ train_data.info()
 
 cols = train_data.columns
 
-#HeatMap using seborn
-corr = train_data.corr()
-_, ax = plt.subplots( figsize =( 12 , 10 ) )
-cmap = sns.diverging_palette( 220 , 10 , as_cmap = True )
-_ = sns.heatmap(corr,cmap = cmap,square=True,cbar_kws={ 'shrink' : .9 },ax=ax,annot = True,annot_kws = { 'fontsize' : 12 })
-plt.figure(1)
 
 #Drop cabin since many missing values
 df = train_data.drop(columns='Cabin')
 print(df.head())
+
+
+
+column_name = ['Survived', 'Sex_female', 'Pclass', 'Age', 'SibSp', 'Parch', 'Fare']
+df_corr = df[column_name]
+
+#HeatMap using seborn
+plt.figure(1)
+sns.heatmap(df_corr.corr(), 
+            annot=True,
+            cmap = 'RdBu_r',
+            linewidths=0.1, 
+            linecolor='white',
+            vmax = .9,
+            square=True)
+plt.title("Correlations Among Features", y = 1.03,fontsize = 20);
+
+
 
 
 # scatter plot matrix
@@ -74,24 +87,28 @@ colorList = ['#78C850',  # Grass
                     ]
 
 #Percentage of Male and Female who survived
-plt.figure(2)
-sns.barplot(x='Sex',y='Survived',data=df, palette= colorList)
-grouped_df = df.groupby('Sex',as_index=False).Survived.mean()
-print("\n**********Percentage of Male and Female who survived**************\n",grouped_df)
+plt.figure(3)
+print("---------Sex Feature Analysis------")
+sns.barplot(x='Sex_female',y='Survived',data=df, palette= colorList)
+print("Percentage of females who survived:", df["Survived"][df["Sex_female"] == 1].value_counts(normalize = True)[1]*100)
+
+print("Percentage of males who survived:", df["Survived"][df["Sex_female"] == 0].value_counts(normalize = True)[1]*100)
 
 
 #Comparing the Pclass feature against Survived
-plt.figure(3)
+plt.figure(4)
 sns.barplot(x='Pclass',y='Survived',data=df, palette= colorList)
-grouped_df = df[["Pclass", "Survived"]].groupby(['Pclass'], as_index=False).mean().sort_values(by='Survived', ascending=False)
-print("\n**********Percentage of people in different class who survived**************\n",grouped_df)
-#print(grouped_df)
+print("Percentage of Pclass = 1 who survived:", df["Survived"][df["Pclass"] == 1].value_counts(normalize = True)[1]*100)
+
+print("Percentage of Pclass = 2 who survived:", df["Survived"][df["Pclass"] == 2].value_counts(normalize = True)[1]*100)
+
+print("Percentage of Pclass = 3 who survived:", df["Survived"][df["Pclass"] == 3].value_counts(normalize = True)[1]*100)
 
 
 
 
 #Comparing the Parch feature against Survived
-plt.figure(4)
+plt.figure(5)
 sns.barplot(x='Parch',y='Survived',data=df, palette= colorList)
 grouped_df = df[["Parch", "Survived"]].groupby(['Parch'], as_index=False).mean().sort_values(by='Survived', ascending=False)
 print("\n**********Percentage of people who survived with following no of parents or children**************\n",grouped_df)
@@ -100,41 +117,31 @@ print("\n**********Percentage of people who survived with following no of parent
 
 
 #Comparing the Sibling  feature against Survived
-plt.figure(5)
+plt.figure(6)
 sns.barplot(x='SibSp',y='Survived',data=df,palette= colorList)
-grouped_df=df[["SibSp", "Survived"]].groupby(['SibSp'], as_index=False).mean().sort_values(by='Survived', ascending=False)
-print("**********Percentage of people who survived as per no of siblings**************\n",grouped_df)
-#print(grouped_df)
+print("Percentage of SibSp = 0 who survived:", df["Survived"][df["SibSp"] == 0].value_counts(normalize = True)[1]*100)
 
+print("Percentage of SibSp = 1 who survived:", df["Survived"][df["SibSp"] == 1].value_counts(normalize = True)[1]*100)
+
+print("Percentage of SibSp = 2 who survived:", df["Survived"][df["SibSp"] == 2].value_counts(normalize = True)[1]*100)
 
 
 
 #Survival  by Age 
 #sort the ages into logical categories
+
 df["Age"] = df["Age"].fillna(-0.5)
-bins = [-1, 0, 5, 18, 35, 60, np.inf]
-labels = ['Missing', 'Baby', 'Child', 'Teenager', 'Adult', 'Senior']
+bins = [0, 5, 18, 35, 60, np.inf]
+labels = ['Baby', 'Child', 'Teenager', 'Adult', 'Senior']
 df['AgeGroup'] = pd.cut(df["Age"], bins, labels = labels)
-plt.figure(6)
+plt.figure(7)
 #draw a bar plot of Age vs. survival
 sns.barplot(x="AgeGroup", y="Survived", data=df, palette= colorList)
 plt.show()
 
 
 
-
-# scatter plot
-# plt.scatter(df.Survived, df.Age)
-
-# histogram: shows the conts
-# df.hist(column='Sex', bins=25)
-
-#
-# plt.imshow(df.columns['Survived','Sex'], cmap='hot', interpolation='nearest')
-
-## scatter plots for all pairs
-# sns.set(style='whitegrid', context='notebook')
-# ax = sns.pairplot(df[cols[1:3]],);
-# # plt.savefig("scatter.pdf")
-
-# plt.show()
+#imputaion of mean to age column 
+imp=Imputer(missing_values="NaN", strategy="mean" )
+imp.fit(df[["Age"]])
+df["Age"]=imp.transform(df[["Age"]]).ravel()
