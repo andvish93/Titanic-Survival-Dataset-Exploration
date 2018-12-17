@@ -89,7 +89,7 @@ colorList = ['#78C850',  # Grass
 #Percentage of Male and Female who survived
 plt.figure(3)
 print("---------Sex Feature Analysis------")
-sns.barplot(x='Sex_female',y='Survived',data=df, palette= colorList)
+sns.barplot(x='Sex_female',y='Survived',data=df, palette= colorList).set_title("Survival Rate Vs Sex")
 print("Percentage of females who survived:", df["Survived"][df["Sex_female"] == 1].value_counts(normalize = True)[1]*100)
 
 print("Percentage of males who survived:", df["Survived"][df["Sex_female"] == 0].value_counts(normalize = True)[1]*100)
@@ -97,7 +97,7 @@ print("Percentage of males who survived:", df["Survived"][df["Sex_female"] == 0]
 
 #Comparing the Pclass feature against Survived
 plt.figure(4)
-sns.barplot(x='Pclass',y='Survived',data=df, palette= colorList)
+sns.barplot(x='Pclass',y='Survived',data=df, palette= colorList).set_title("Survival Rate Vs Class")
 print("Percentage of Pclass = 1 who survived:", df["Survived"][df["Pclass"] == 1].value_counts(normalize = True)[1]*100)
 
 print("Percentage of Pclass = 2 who survived:", df["Survived"][df["Pclass"] == 2].value_counts(normalize = True)[1]*100)
@@ -109,7 +109,7 @@ print("Percentage of Pclass = 3 who survived:", df["Survived"][df["Pclass"] == 3
 
 #Comparing the Parch feature against Survived
 plt.figure(5)
-sns.barplot(x='Parch',y='Survived',data=df, palette= colorList)
+sns.barplot(x='Parch',y='Survived',data=df, palette= colorList).set_title("Survival Rate Vs Parch")
 grouped_df = df[["Parch", "Survived"]].groupby(['Parch'], as_index=False).mean().sort_values(by='Survived', ascending=False)
 print("\n**********Percentage of people who survived with following no of parents or children**************\n",grouped_df)
 #print(grouped_df)
@@ -118,7 +118,7 @@ print("\n**********Percentage of people who survived with following no of parent
 
 #Comparing the Sibling  feature against Survived
 plt.figure(6)
-sns.barplot(x='SibSp',y='Survived',data=df,palette= colorList)
+sns.barplot(x='SibSp',y='Survived',data=df,palette= colorList).set_title("Survival Rate Vs SibSp")
 print("Percentage of SibSp = 0 who survived:", df["Survived"][df["SibSp"] == 0].value_counts(normalize = True)[1]*100)
 
 print("Percentage of SibSp = 1 who survived:", df["Survived"][df["SibSp"] == 1].value_counts(normalize = True)[1]*100)
