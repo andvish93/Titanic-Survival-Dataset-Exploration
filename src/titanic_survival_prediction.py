@@ -11,18 +11,26 @@ Last updated:12/16/2018
 """
 
 # imports
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+try:
+    import numpy as np
+except:
+    print("Please install numpy ")
+try:
+    import pandas as pd
+except:
+    print("Please install pandas")
+try:
+    import matplotlib.pyplot as plt
+ex
 import seaborn as sns
 from sklearn.impute import SimpleImputer
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import confusion_matrix,accuracy_score,precision_score,recall_score
 
-# __PREDICTOR_VARIABLES__ = ['Pclass','Age', 'SibSp', 'Parch', 'Fare', 'female', 'C', 'Q', 'S']
-__PREDICTOR_VARIABLES__ = ['Fare', 'female']
+__PREDICTOR_VARIABLES__1 = [1,2,3,'Age', 'SibSp', 'Parch', 'Fare', 'female', 'C', 'Q', 'S']
+__PREDICTOR_VARIABLES__2 = ['Fare', 'female']
+__PREDICTOR_VARIABLES__3 = [3, 'female']
 
 
 # Read in a file, returns pandas dataframe
@@ -42,11 +50,75 @@ def one_hot_enc(df, column_name):
     df = df.join(one_hot)
     return df
     
+def print_cv_results(__PREDICTOR_VARIABLES__,scores):
+    # printing cross validation scores    
+    print("Cross validation scores for model with predictors",__PREDICTOR_VARIABLES__)
+    print("Cross validation Accuracy scores : ",scores["test_accuracy"])
+    print("Mean Cross validation accuracy :",scores["test_accuracy"].mean())
+    print("Standard deviation of Cross validation accuracy :",scores["test_accuracy"].std()*2.0)
+    print("Cross validation Precision scores : ",scores["test_precision"])
+    print("Cross validation Recall scores : ",scores["test_recall"])
+    print("Cross validation f1 scores : ",scores["test_f1"])
+    print("Score time: ",scores["score_time"])
+    print("Score fit time: ",scores["fit_time"])     
+    return
+
+def print_test_results(model_no, actual_class,predicted_class):
+    print("Results for model no: ",model_no)
+    # printing model performance scores based on test data
+    print("Accuracy % of predictions on test data",accuracy_score(actual_class["Survived"], predicted_class, normalize=True, sample_weight=None)*100)    
+    print("Precision of predictions on test data",precision_score(actual_class["Survived"], predicted_class,   average='macro'))    
+    print("Recall of predictions on test data",recall_score(actual_class["Survived"], predicted_class,  average='macro'))  
+    print("Confusion matrix :\n",confusion_matrix(actual_class["Survived"], predicted_class))
+    return
+
+
+def feature_correlation_analysis(df,threshold = 0.2):
+
+    # One hot encoding on feature Sex
+    print("Performing one hot encoding on Sex column")
+    df = one_hot_enc(df,"Sex")
+    
+    # One hot encoding on feature Embarked
+    print("Performing one hot encoding on Embarked column")
+    df = one_hot_enc(df,"Embarked")
+    
+    # One hot encoding on feature Pclass
+    print("Performing one hot encoding on Pclass column")
+    df = one_hot_enc(df,"Pclass")    
+    
+    selectedColumns = list(df.columns)
+    selectedColumns.remove("PassengerId")
+    selectedColumns.remove("Cabin")
+    selectedColumns.remove("Name")
+    selectedColumns.remove("Ticket")
+    
 
     
-def data_visualization(df):    
+    cm = np.corrcoef(df[selectedColumns].values.T) 
     
+
+    ## print the features corelated with the target
+    print("The features corelated with the target based on threshold " + str(threshold))
+    for rowIndex in range(len(cm)):
+        corrIndex = 0 # the target index
+        if rowIndex != corrIndex:
+            if (cm[rowIndex][corrIndex] > threshold or cm[rowIndex][corrIndex] < -threshold) :
+                print(str(selectedColumns[rowIndex]) + " and " + str(selectedColumns[corrIndex]) + " are dependent")
+    print("\n")
     
+    ## print the features corelated with each others
+    print("The features corelated with each others based on threshold " + str(threshold))
+    for rowIndex in range(1, len(cm)):
+        for corrIndex in range(1, len(cm[rowIndex])):
+            if rowIndex != corrIndex:
+                if (cm[rowIndex][corrIndex] > threshold or cm[rowIndex][corrIndex] < -threshold):
+                    print(str(selectedColumns[rowIndex]) + " and " + str(selectedColumns[corrIndex]) + " are dependent")
+    print(selectedColumns)
+    return
+
+                        
+def data_visualization(df):        
     print("Plotting heatmap to show correlation among features")
     # HeatMap using seborn
     plt.figure(1)
@@ -136,7 +208,7 @@ def data_visualization(df):
     df['AgeGroup'] = pd.cut(df["Age"], bins, labels = labels)
     plt.figure(8)
     #draw a bar plot of Age vs. survival
-    sns.barplot(x="AgeGroup", y="Survived", data=df, palette= colorList)
+    sns.barplot(x="AgeGroup", y="Survived", data=df, palette= colorList).set_title("Survival Rate Vs Age groups")
 
     plt.show()
     print("Done")
@@ -144,7 +216,6 @@ def data_visualization(df):
     return
 
 def data_cleaning(df):
-    
     
     # Drop cabin since many missing values
     print("Dropping column Cabin due to missing values")
@@ -163,14 +234,19 @@ def data_cleaning(df):
     # One hot encoding on feature Sex
     print("Performing one hot encoding on Sex column")
     df = one_hot_enc(df,"Sex")
+    
     # One hot encoding on feature Embarked
     print("Performing one hot encoding on Embarked column")
     df = one_hot_enc(df,"Embarked")
-
+    
+    # One hot encoding on feature Pclass
+    print("Performing one hot encoding on Pclass column")
+    df = one_hot_enc(df,"Pclass")
+    
     print("done")    
     return df
     
-def model(df):
+def model(df,__PREDICTOR_VARIABLES__):
     
     clf = SVC(C = 1, gamma = 'auto', class_weight=None, coef0=0.0, kernel = 'linear')
     print("Training the model")
@@ -178,11 +254,13 @@ def model(df):
 
     print("Performing 5 Fold cross validation")
 
-    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=2,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
+    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
 
     print("Done")
 
     return clf,scores
+
+
 
 def main():
     
@@ -190,55 +268,76 @@ def main():
     print("Reading training file")
     df = read_file("train.csv")
     
+    # intial data analysis
+    # printing results of feature correlation analysis with threshold - 0.2
+    feature_correlation_analysis(df)
+    # printing results of feature correlation analysis with threshold - 0.5
+    feature_correlation_analysis(df,0.5)
+    # printing results of feature correlation analysis with threshold - 0.8
+    feature_correlation_analysis(df,0.8)
+    
+
     # data visualization
     data_visualization(df)
-
+    
     # data cleaning - pruning, imputation, one hot encoding
     cleaned_df = data_cleaning(df)
-
-    # training and 5 fold and c parameter
-    clf, scores = model(cleaned_df)    
     
-    print("Cross validation Accuracy scores : ",scores["test_accuracy"])
-    print("Cross validation Precision scores : ",scores["test_precision"])
-    print("Cross validation Recall scores : ",scores["test_recall"])
-    print("Cross validation f1 scores : ",scores["test_f1"])
-    print("Score time: ",scores["score_time"])
-    print("Score fit time: ",scores["fit_time"])
-
-    
-    test_df = read_file("test.csv")
-
+    # extracting the median age and fare values of the training set
     age_median = df["Age"].median()    
-    Fare_median = df["Fare"].median()
-    
-    print("Imputing age column with the median value of training data")    
-    test_df.Age.fillna(age_median,inplace=True)
+    Fare_median = df["Fare"].median()    
 
-    print("Imputing Fare column with the median value of test data")    
+    # reading in test file
+    test_df = read_file("test.csv")
     
+    # reading in actual classes
+    actual_class = pd.read_csv("gender_submission.csv")
+    
+    # data imputation for mmissing values in test set in fare and age columns
+    print("Imputing age column of test set with the median value of training data")    
+    test_df.Age.fillna(age_median,inplace=True)
+    print("Imputing Fare column of test set with the median value of training data")    
     test_df.Fare.fillna(Fare_median,inplace=True)
 
     # One hot encoding on feature Sex in test dataset
     test_df = one_hot_enc(test_df,"Sex")
     # One hot encoding on feature Embarked in test dataset
     test_df = one_hot_enc(test_df,"Embarked")
-    
-    test_df=test_df[__PREDICTOR_VARIABLES__]
-        
-    predicted_class = clf.predict(test_df)
-    
-    actual_class = pd.read_csv("gender_submission.csv")
+    # One hot encoding on feature Pclass in test dataset
+    test_df = one_hot_enc(test_df,"Pclass")
 
+
+    # training and 5 fold and c parameter
+    clf1, scores = model(cleaned_df,__PREDICTOR_VARIABLES__1)    
+    # printing cv scores for model with first set of predictor variables
+    print_cv_results(__PREDICTOR_VARIABLES__1,scores)    
+    test_df1=test_df[__PREDICTOR_VARIABLES__1]        
     
-    print("Accuracy % of predictions on test data",accuracy_score(actual_class["Survived"], predicted_class, normalize=True, sample_weight=None)*100)
+    # testing the model 1 on test set
+    predicted_class = clf1.predict(test_df1)    
+    print_test_results(1,actual_class,predicted_class)
     
-    print("Precision of predictions on test data",precision_score(actual_class["Survived"], predicted_class,   average='macro'))
+
+    # training and 5 fold and c parameter
+    clf2, scores = model(cleaned_df,__PREDICTOR_VARIABLES__2)        
+    # printing cv scores for model with first set of predictor variables
+    print_cv_results(__PREDICTOR_VARIABLES__2,scores)
     
-    print("Recall of predictions on test data",recall_score(actual_class["Survived"], predicted_class,  average='macro'))
-  
-    print("Confusion matrix :\n",confusion_matrix(actual_class["Survived"], predicted_class))
-    
+    test_df2=test_df[__PREDICTOR_VARIABLES__2]        
+    # testing the model 2 on test set
+    predicted_class = clf2.predict(test_df2)    
+    print_test_results(2,actual_class,predicted_class)
+
+    # training and 5 fold and c parameter for model 3
+    clf3, scores = model(cleaned_df,__PREDICTOR_VARIABLES__3)    
+    # printing cv scores for model with first set of predictor variables
+    print_cv_results(__PREDICTOR_VARIABLES__3,scores)
+
+    test_df3=test_df[__PREDICTOR_VARIABLES__3]        
+    # testing the model 3 on test set
+    predicted_class = clf3.predict(test_df3)    
+    print_test_results(3,actual_class,predicted_class)
+
     return
 
 
