@@ -18,11 +18,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.impute import SimpleImputer
 from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score, cross_val_predict
-from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import confusion_matrix,accuracy_score,precision_score,recall_score
 
-__PREDICTOR_VARIABLES__ = ['Pclass','Age', 'SibSp', 'Parch', 'Fare', 'female', 'male', 'C', 'Q', 'S']
-
+# __PREDICTOR_VARIABLES__ = ['Pclass','Age', 'SibSp', 'Parch', 'Fare', 'female', 'C', 'Q', 'S']
+__PREDICTOR_VARIABLES__ = ['Fare', 'female']
 
 
 # Read in a file, returns pandas dataframe
@@ -175,13 +175,13 @@ def model(df):
     clf = SVC(C = 1, gamma = 'auto', class_weight=None, coef0=0.0, kernel = 'linear')
     print("Training the model")
     clf.fit(df[__PREDICTOR_VARIABLES__], df["Survived"])
-    print("Performing 5Fold cross validation")
-    scores = cross_val_score(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5, n_jobs=-1)
-    print("Cross validation scores : ",scores)
-    print("Performing cross val prediction analysis")
-    preds = cross_val_predict(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5)
-    conf_mat = confusion_matrix(df["Survived"], preds)
-    print("Confusion matrix\n",conf_mat)
+
+    print("Performing 5 Fold cross validation")
+
+    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=2,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
+
+    print("Done")
+
     return clf,scores
 
 def main():
@@ -199,6 +199,12 @@ def main():
     # training and 5 fold and c parameter
     clf, scores = model(cleaned_df)    
     
+    print("Cross validation Accuracy scores : ",scores["test_accuracy"])
+    print("Cross validation Precision scores : ",scores["test_precision"])
+    print("Cross validation Recall scores : ",scores["test_recall"])
+    print("Cross validation f1 scores : ",scores["test_f1"])
+    print("Score time: ",scores["score_time"])
+    print("Score fit time: ",scores["fit_time"])
 
     
     test_df = read_file("test.csv")
@@ -213,9 +219,9 @@ def main():
     
     test_df.Fare.fillna(Fare_median,inplace=True)
 
-    # One hot encoding on feature Embarked
+    # One hot encoding on feature Sex in test dataset
     test_df = one_hot_enc(test_df,"Sex")
-
+    # One hot encoding on feature Embarked in test dataset
     test_df = one_hot_enc(test_df,"Embarked")
     
     test_df=test_df[__PREDICTOR_VARIABLES__]
@@ -223,15 +229,15 @@ def main():
     predicted_class = clf.predict(test_df)
     
     actual_class = pd.read_csv("gender_submission.csv")
-    actual_class = list(actual_class["Survived"])
 
-    count = 0
-    for index,predicted_c in enumerate(predicted_class):
-        if actual_class[index] == predicted_c:
-            count +=1
     
-    print("Accuracy of predictions",count/len(predicted_class)*100,"%")
+    print("Accuracy % of predictions on test data",accuracy_score(actual_class["Survived"], predicted_class, normalize=True, sample_weight=None)*100)
     
+    print("Precision of predictions on test data",precision_score(actual_class["Survived"], predicted_class,   average='macro'))
+    
+    print("Recall of predictions on test data",recall_score(actual_class["Survived"], predicted_class,  average='macro'))
+  
+    print("Confusion matrix :\n",confusion_matrix(actual_class["Survived"], predicted_class))
     
     return
 
