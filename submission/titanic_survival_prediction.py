@@ -377,7 +377,7 @@ def model(model_no,df,__PREDICTOR_VARIABLES__):
     print("Model "+str(model_no)+" training done!")
     
     print("Performing 5 Fold cross validation")
-    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=3,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
+    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
 
     print("Model training and cross validation done")
     return clf,scores
