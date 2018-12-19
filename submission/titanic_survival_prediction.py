@@ -367,14 +367,18 @@ def data_cleaning(df):
 def model(model_no,df,__PREDICTOR_VARIABLES__):
    
     print("--------------------------------------------------------------------------------------")    
-    clf = SVC(C = 1, gamma = 'auto', class_weight=None, coef0=0.0, kernel = 'linear')
+    clf = SVC(C = 1, gamma = 'auto', class_weight=None, kernel = 'rbf')
+
     print("Training SVC the model :",model_no)
     print("Predictor Variable List :", __PREDICTOR_VARIABLES__)
+
     clf.fit(df[__PREDICTOR_VARIABLES__], df["Survived"])
+
     print("Model "+str(model_no)+" training done!")
     
     print("Performing 5 Fold cross validation")
-    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=5,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
+    scores = cross_validate(clf, df[__PREDICTOR_VARIABLES__], df["Survived"], cv=3,scoring=('accuracy', 'precision','recall','f1'),return_train_score=False)
+
     print("Model training and cross validation done")
     return clf,scores
 ### end of model
@@ -418,13 +422,13 @@ def main():
     # reading training file
     print("Reading training file")
     df = read_file("train.csv")
-    
+
     # intial data analysis
     # printing results of feature correlation analysis with threshold - 0.2
-    feature_correlation_analysis(df)
-    # printing results of feature correlation analysis with threshold - 0.5
-    feature_correlation_analysis(df,0.5)
-    # printing results of feature correlation analysis with threshold - 0.8
+    # feature_correlation_analysis(df)
+    # # printing results of feature correlation analysis with threshold - 0.5
+    # feature_correlation_analysis(df,0.5)
+    # # printing results of feature correlation analysis with threshold - 0.8
     feature_correlation_analysis(df,0.8)
     
 
@@ -448,46 +452,48 @@ def main():
     
     # reading in actual classes from gender_submission.csv
     actual_class = pd.read_csv("gender_submission.csv")
-    
+
+
     #  Model 1:
     # training model and performing 5 fold cross validation
-    #  on predictor list 1
-    clf1, scores = model(1,cleaned_df,__PREDICTOR_VARIABLES__1)    
+    # #  on predictor list 1
+    clf1, scores1 = model(1,cleaned_df,__PREDICTOR_VARIABLES__1)  
+      
     # printing cv scores for model with first set of predictor variables
-    print_cv_results(1,__PREDICTOR_VARIABLES__1,scores)    
+    print_cv_results(1,__PREDICTOR_VARIABLES__1,scores1)    
     
     # testing the model 1 on real test set
     test_df1=test_df[__PREDICTOR_VARIABLES__1]        
     print("Testing Model 1 against test data")
-    predicted_class = clf1.predict(test_df1)    
+    predicted_class1 = clf1.predict(test_df1)    
     print("Done")
-    print_test_results(1,actual_class,predicted_class)
+    print_test_results(1,actual_class,predicted_class1)
     
     #  Model 2:
     # training model and performing 5 fold cross validation
     #  on predictor list 2
-    clf2, scores = model(2,cleaned_df,__PREDICTOR_VARIABLES__2)        
+    clf2, scores2 = model(2,cleaned_df,__PREDICTOR_VARIABLES__2)        
     # printing cv scores for model with second set of predictor variables
-    print_cv_results(2,__PREDICTOR_VARIABLES__2,scores)
+    print_cv_results(2,__PREDICTOR_VARIABLES__2,scores2)
     # testing the model 2 on test set
     test_df2=test_df[__PREDICTOR_VARIABLES__2]
     print("Testing Model 2 against test data")
-    predicted_class = clf2.predict(test_df2)    
+    predicted_class2 = clf2.predict(test_df2)    
     print("Done")
-    print_test_results(2,actual_class,predicted_class)
+    print_test_results(2,actual_class,predicted_class2)
 
     #  Model 3:
     # training model and performing 5 fold cross validation
     #  on predictor list 3
-    clf3, scores = model(3,cleaned_df,__PREDICTOR_VARIABLES__3)    
+    clf3, scores3 = model(3,cleaned_df,__PREDICTOR_VARIABLES__3)    
     # printing cv scores for model with third set of predictor variables
-    print_cv_results(3,__PREDICTOR_VARIABLES__3,scores)
+    print_cv_results(3,__PREDICTOR_VARIABLES__3,scores3)
     # testing the model 3 on test set
     test_df3=test_df[__PREDICTOR_VARIABLES__3]        
     print("Testing Model 3 against test data")
-    predicted_class = clf3.predict(test_df3)    
+    predicted_class3 = clf3.predict(test_df3)    
     print("Done")
-    print_test_results(3,actual_class,predicted_class)
+    print_test_results(3,actual_class,predicted_class3)
     
     print("Done")
     print("#############################################################################################")
