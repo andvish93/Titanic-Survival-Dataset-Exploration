@@ -42,7 +42,7 @@ jupyter-console==5.1.0
 jupyter-core==4.3.0
 knnimpute==0.1.0
 line-profiler==2.0
-lxml==3.7.3
+lxml==4.6.3
 MarkupSafe==0.23
 matplotlib==2.0.0
 mayavi==4.5.0
